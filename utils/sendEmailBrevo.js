@@ -35,7 +35,7 @@ export const sendOTP = async (email, otpCode) => {
 
 // 🟩 Enviar confirmación de acceso tipo "¿Eres tú?"
 export const sendConfirmationEmail = async (email, token) => {
-  const confirmLink = `http://localhost:5173/confirm-access?token=${token}`;
+const confirmLink = `${process.env.FRONTEND_URL}/confirm-access?token=${token}`;
 
   try {
     const emailData = {
