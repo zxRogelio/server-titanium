@@ -20,21 +20,26 @@ import { sendOTP, sendConfirmationEmail } from "../utils/sendEmailBrevo.js";
   }
 };
 
-    export const loginNormal = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(401).json({ error: "No existe el usuario" });
+  export const loginNormal = async (req, res) => {
+  const { email, password } = req.body;
 
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(401).json({ error: "Contraseña incorrecta" });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: "No existe el usuario" });
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.json({ message: "Inicio exitoso", token });
-    } catch (err) {
-        res.status(500).json({ error: "Error en login" });
-    }
-    };
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: "Contraseña incorrecta" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    // 🟢 Responder también con el email
+    res.json({ message: "Inicio exitoso", token, email });
+  } catch (err) {
+    console.error("❌ Error en login:", err);
+    res.status(500).json({ error: "Error en login" });
+  }
+};
+
     // LOGIN CON CORREO + CONTRASEÑA + ENVÍO DE OTP
     export const login = async (req, res) => {
     const { email, password } = req.body;
@@ -176,26 +181,22 @@ export const confirmAccess = async (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
-
-    if (!user || user.accessToken !== token || !user.isPendingApproval) {
-      return res.status(403).json({ error: "Token inválido o expirado" });
-    }
-
-    user.isPendingApproval = false;
-    user.accessToken = null;
-    await user.save();
+    if (!user) return res.status(403).json({ error: "Usuario no encontrado" });
 
     const finalToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-res.status(200).json({
-  message: "Acceso confirmado",
-  token: finalToken,
-  email: user.email, 
-});
+    res.status(200).json({
+      message: "Acceso confirmado sin comparar accessToken",
+      token: finalToken,
+      email: user.email,
+    });
   } catch (err) {
-    res.status(400).json({ error: "Token inválido" });
+    console.error("❌ Error al verificar token:", err.message);
+    res.status(400).json({ error: "Token inválido o expirado" });
   }
 };
+
+
 // Genera la clave secreta y QR
 export const generateTOTP = async (req, res) => {
   const { email } = req.body;

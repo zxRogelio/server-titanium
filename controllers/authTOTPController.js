@@ -6,24 +6,39 @@ import jwt from "jsonwebtoken";
 // Genera la clave secreta y QR
 export const generateTOTP = async (req, res) => {
   const { email } = req.body;
+
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
-    const secret = speakeasy.generateSecret({
-      name: `MiApp (${email})`,
+    // ✅ Si ya tiene una clave, no generamos otra
+    if (!user.totpSecret) {
+      const secret = speakeasy.generateSecret({
+        name: `MiApp (${email})`,
+      });
+
+      user.totpSecret = secret.base32;
+      await user.save();
+
+      const qr = await qrcode.toDataURL(secret.otpauth_url);
+      return res.json({ qr });
+    }
+
+    // 🔁 Volver a generar QR desde el secreto existente
+    const otpauth = speakeasy.otpauthURL({
+      secret: user.totpSecret,
+      label: `MiApp (${email})`,
+      encoding: "base32",
     });
 
-    user.totpSecret = secret.base32;
-    await user.save();
-
-    const qr = await qrcode.toDataURL(secret.otpauth_url);
+    const qr = await qrcode.toDataURL(otpauth);
     res.json({ qr });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error generando el código QR" });
   }
 };
+
 export const verifyTOTP = async (req, res) => {
   const { email, otp } = req.body;
 
