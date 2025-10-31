@@ -1,49 +1,46 @@
+// controllers/authTOTPController.js
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
-import { User } from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { User } from "../models/User.js";
 
-// Genera la clave secreta y QR
 export const generateTOTP = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
-    // ✅ Si ya tiene una clave, no generamos otra
-    if (!user.totpSecret) {
-      const secret = speakeasy.generateSecret({
-        name: `MiApp (${email})`,
-      });
+    let otpauth_url;
 
+    // ✅ Si el usuario no tiene un secreto, generamos uno nuevo
+    if (!user.totpSecret) {
+      const secret = speakeasy.generateSecret({ name: `UMISUMI (${email})` });
       user.totpSecret = secret.base32;
       await user.save();
-
-      const qr = await qrcode.toDataURL(secret.otpauth_url);
-      return res.json({ qr });
+      otpauth_url = secret.otpauth_url;
+    } else {
+      // 🔁 Si ya tiene un secreto, usamos el mismo
+      otpauth_url = speakeasy.otpauthURL({
+        secret: user.totpSecret,
+        label: `UMISUMI (${email})`,
+        encoding: "base32",
+      });
     }
 
-    // 🔁 Volver a generar QR desde el secreto existente
-    const otpauth = speakeasy.otpauthURL({
-      secret: user.totpSecret,
-      label: `MiApp (${email})`,
-      encoding: "base32",
-    });
-
-    const qr = await qrcode.toDataURL(otpauth);
-    res.json({ qr });
+    // ✅ Enviar solo la URL al frontend
+    return res.json({ otpauth_url });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error generando TOTP:", err);
     res.status(500).json({ error: "Error generando el código QR" });
   }
 };
 
 export const verifyTOTP = async (req, res) => {
-  const { email, otp } = req.body;
+  const { email, code } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user || !user.totpSecret) {
       return res.status(404).json({ error: "Usuario o secreto no encontrado" });
     }
@@ -51,16 +48,17 @@ export const verifyTOTP = async (req, res) => {
     const isValid = speakeasy.totp.verify({
       secret: user.totpSecret,
       encoding: "base32",
-      token: otp,
-      window: 2, // ← tolerancia de tiempo (30s antes o después)
+      token: code,
+      window: 2, // margen de 1 código antes y 1 después
     });
 
     if (!isValid) return res.status(401).json({ error: "Código inválido" });
 
-    // Si el código es válido, generamos token JWT normal
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     res.json({ token });
   } catch (err) {

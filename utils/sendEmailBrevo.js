@@ -1,4 +1,3 @@
-// utils/sendEmailBrevo.js
 import pkg from 'sib-api-v3-sdk';
 const SibApiV3Sdk = pkg;
 
@@ -35,7 +34,7 @@ export const sendOTP = async (email, otpCode) => {
 
 // 🟩 Enviar confirmación de acceso tipo "¿Eres tú?"
 export const sendConfirmationEmail = async (email, token) => {
-const confirmLink = `${process.env.FRONTEND_URL}/confirm-access?token=${token}`;
+  const confirmLink = `${process.env.FRONTEND_URL}/confirmar-acceso?token=${token}`;
 
   try {
     const emailData = {
@@ -44,9 +43,9 @@ const confirmLink = `${process.env.FRONTEND_URL}/confirm-access?token=${token}`;
       subject: '¿Eres tú? Confirma tu acceso',
       htmlContent: `
         <h2>Confirmación de acceso</h2>
-        <p>Se detectó un intento de inicio de sesión.</p>
-        <p>Si fuiste tú, haz clic aquí:</p>
-        <a href="${confirmLink}"
+        <p>Se detectó un intento de inicio de sesión con tu cuenta.</p>
+        <p>Si fuiste tú, confirma tu acceso:</p>
+        <a href="${confirmLink}" target="_blank" rel="noopener noreferrer"
           style="display:inline-block;padding:10px 20px;background:#3f51b5;color:#fff;
                  border-radius:6px;text-decoration:none;font-weight:bold;">
           Sí, soy yo
@@ -59,6 +58,36 @@ const confirmLink = `${process.env.FRONTEND_URL}/confirm-access?token=${token}`;
     console.log(`✅ Correo de confirmación enviado a ${email}`);
   } catch (error) {
     console.error('❌ Error al enviar correo de confirmación:', error.response?.text || error.message);
+    throw error;
+  }
+};
+
+// 🟨 Enviar correo de verificación de cuenta
+export const sendVerificationEmail = async (email, token) => {
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify-account?token=${token}`;
+
+  try {
+    const emailData = {
+      to: [{ email }],
+      sender: { name: 'UMISUMI Registro', email: 'loscracksdelchat@gmail.com' },
+      subject: 'Verifica tu cuenta',
+      htmlContent: `
+        <h2>¡Bienvenido a UMISUMI!</h2>
+        <p>Para completar tu registro, verifica tu cuenta haciendo clic aquí:</p>
+        <a href="${verifyUrl}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-block;padding:10px 20px;background:#43A047;color:#fff;
+                 border-radius:6px;text-decoration:none;font-weight:bold;">
+          Verificar cuenta
+        </a>
+        <p>Este enlace expira en 15 minutos.</p>
+        <p>Si no creaste esta cuenta, ignora este correo.</p>
+      `,
+    };
+
+    await apiInstance.sendTransacEmail(emailData);
+    console.log(`✅ Correo de verificación enviado a ${email}`);
+  } catch (error) {
+    console.error('❌ Error al enviar correo de verificación:', error.response?.text || error.message);
     throw error;
   }
 };

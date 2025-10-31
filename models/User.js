@@ -1,14 +1,53 @@
-import mongoose from "mongoose";
+// models/User.js
+import { DataTypes } from "sequelize";
+import { sequelize } from "../config/sequelize.js";
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String },
-  otp: { type: String },
-  otpExpires: { type: Date },
-  isPendingApproval: { type: Boolean, default: false },
-  accessToken: { type: String, default: null },
-  totpSecret: { type: String, default: null },
+export const User = sequelize.define("User", {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  email: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false,
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  otp: DataTypes.STRING,
+  otpExpires: DataTypes.DATE,
 
+  // ✅ Nuevo campo: Verificación de cuenta
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false, // por defecto no está verificado
+  },
+
+  isPendingApproval: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  accessToken: {
+    type: DataTypes.STRING,
+    defaultValue: null,
+  },
+  totpSecret: {
+    type: DataTypes.STRING,
+    defaultValue: null,
+  },
+
+  // ✅ Método de autenticación (login normal, OTP, QR o link)
+  authMethod: {
+    type: DataTypes.ENUM("normal", "otp", "totp", "confirm-link"),
+    defaultValue: "normal",
+  },
+
+  // ✅ Roles del sistema
+  role: {
+    type: DataTypes.ENUM("cliente", "entrenador", "administrador"),
+    defaultValue: "cliente",
+  },
 });
-
-export const User = mongoose.model("User", userSchema);
