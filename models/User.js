@@ -65,4 +65,12 @@ export const User = sequelize.define("User", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  passwordChangesCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  passwordChangesDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
 });

@@ -396,11 +396,30 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "OTP inválido o expirado" });
     }
 
-    // 3️⃣ Hashear y guardar nueva contraseña
+    // 3️⃣ Verificar límite de 3 cambios por día
+    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const lastDate = user.passwordChangesDate; // puede ser null o "YYYY-MM-DD"
+
+    if (lastDate === today) {
+      if (user.passwordChangesCount >= 3) {
+        return res.status(429).json({
+          error:
+            "Ya has cambiado tu contraseña 3 veces hoy. Intenta de nuevo mañana.",
+        });
+      }
+      user.passwordChangesCount += 1;
+    } else {
+      // Nuevo día: reiniciamos contador
+      user.passwordChangesDate = today;
+      user.passwordChangesCount = 1;
+    }
+
+    // 4️⃣ Hashear y guardar nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.otp = null;
     user.otpExpires = null;
+
     await user.save();
 
     res
@@ -413,6 +432,7 @@ export const resetPassword = async (req, res) => {
       .json({ error: "Error al actualizar contraseña" });
   }
 };
+
 
 export const confirmAccess = async (req, res) => {
   // 🔍 Aceptamos el token de varias formas
