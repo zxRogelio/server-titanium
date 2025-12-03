@@ -666,3 +666,44 @@ export const googleCallback = async (req, res) => {
       .json({ error: "Error en el callback de autenticación con Google" });
   }
 };
+export const resendLoginOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Correo requerido" });
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      // respuesta genérica para no filtrar si el correo existe o no
+      return res.status(200).json({
+        message: "Si el correo está registrado, se ha reenviado el código.",
+      });
+    }
+
+    // Solo reenviamos si su método es OTP
+    if (user.authMethod !== "otp") {
+      return res
+        .status(400)
+        .json({ error: "Este usuario no tiene activo el método OTP para login." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+
+    user.otp = otp;
+    user.otpExpires = expires;
+    await user.save();
+
+    await sendOTP(email, otp);
+
+    return res.status(200).json({
+      message: "Se ha reenviado el código al correo registrado.",
+    });
+  } catch (err) {
+    console.error("❌ Error al reenviar OTP de login:", err);
+    return res.status(500).json({ error: "Error al reenviar código" });
+  }
+};

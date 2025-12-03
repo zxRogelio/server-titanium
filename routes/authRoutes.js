@@ -19,7 +19,7 @@ import {
 import { loginLimiter } from "../middleware/loginLimiter.js";
 import { logout } from "../controllers/authController.js";
 import { checkBlacklist } from "../middleware/checkBlacklist.js";
-
+import { resendLoginOTP } from "../controllers/authController.js";
 import { validateRegister } from "../middleware/validateRegister.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
@@ -47,6 +47,8 @@ router.post("/verify-totp", verifyTOTP);
 router.post("/forgot-password", loginLimiter, forgotPassword);
 router.post("/verify-reset-otp", loginLimiter, verifyResetOTP);
 router.post("/reset-password", loginLimiter, resetPassword);
+router.post("/resend-login-otp", resendLoginOTP);
+
 
 // OAuth con Google
 router.get("/google", googleAuth);
