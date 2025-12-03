@@ -73,11 +73,11 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("✅ Conectado a SQL Server");
-    // ⚠️ SOLO en desarrollo, para ajustar columnas existentes
-    return sequelize.sync({ alter: true });
+    return sequelize.sync();
   })
-  .then(() => console.log("✅ Tablas sincronizadas (alter)"))
+  .then(() => console.log("✅ Tablas sincronizadas"))
   .catch((err) => console.error("❌ Error al conectar DB:", err));
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes); // ahora tienes /api/user/perfil y /api/user/admin-dashboard
