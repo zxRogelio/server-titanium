@@ -10,20 +10,22 @@ export const User = sequelize.define("User", {
   },
   email: {
     type: DataTypes.STRING,
-    unique: true,
     allowNull: false,
   },
+
+  // 👇 Ahora puede ser null para usuarios OAuth (Google)
   password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
+
   otp: DataTypes.STRING,
   otpExpires: DataTypes.DATE,
 
-  // ✅ Nuevo campo: Verificación de cuenta
+  // ✅ Verificación de cuenta
   isVerified: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false, // por defecto no está verificado
+    defaultValue: false,
   },
 
   isPendingApproval: {
@@ -49,5 +51,18 @@ export const User = sequelize.define("User", {
   role: {
     type: DataTypes.ENUM("cliente", "entrenador", "administrador"),
     defaultValue: "cliente",
+  },
+
+  // 🔹 Nuevo: proveedor de autenticación
+  provider: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "local", // 'local' (email/contraseña), 'google' (OAuth)
+  },
+
+  // 🔹 Nuevo: id del usuario en el proveedor (por ejemplo, Google sub)
+  providerId: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
 });

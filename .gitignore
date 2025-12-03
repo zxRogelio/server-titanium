@@ -1,0 +1,32 @@
+# Evitar subir variables sensibles
+.env
+
+# Node modules (carpeta muy pesada, se vuelve a instalar)
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Sistema operativo y editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Producción de compilación (si haces build en algún momento)
+dist/
+build/
+
+# Test coverage
+coverage/
+
+# Render o Vercel local
+.vercel/
+.render/
+
+# Otros archivos temporales
+*.local
+*.swp
+*.swo

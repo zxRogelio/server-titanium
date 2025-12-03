@@ -5,7 +5,12 @@ dotenv.config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendConfirmationEmail = async (email, token) => {
-  const confirmLink = `http://localhost:5173/confirm-access?token=${token}`;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+  // 🔐 IMPORTANTE: encodeURIComponent
+  const confirmLink = `${frontendUrl}/confirm-access?token=${encodeURIComponent(
+    token
+  )}`;
 
   const { error } = await resend.emails.send({
     from: "UMISUMI <onboarding@resend.dev>",
