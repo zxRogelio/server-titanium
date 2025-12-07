@@ -44,9 +44,9 @@ router.post("/generate-totp" ,verifyToken,checkBlacklist,generateTOTP);
 router.post("/verify-totp", verifyTOTP);
 
 // Recuperación de contraseña
-router.post("/forgot-password", loginLimiter, forgotPassword);
-router.post("/verify-reset-otp", loginLimiter, verifyResetOTP);
-router.post("/reset-password", loginLimiter, resetPassword);
+router.post("/forgot-password",  forgotPassword);
+router.post("/verify-reset-otp", verifyResetOTP);
+router.post("/reset-password",  resetPassword);
 router.post("/resend-login-otp", resendLoginOTP);
 
 

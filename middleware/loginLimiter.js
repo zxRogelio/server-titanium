@@ -1,28 +1,11 @@
+// middleware/loginLimiter.js
 import rateLimit from "express-rate-limit";
 
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutos
-
 export const loginLimiter = rateLimit({
-  windowMs: WINDOW_MS,
-  max: 5,
+  windowMs: 15 * 60 * 1000, // ⏱ 15 minutos
+  max: 5,                   // máximo 5 intentos por IP en ese tiempo
+  message:
+    "Demasiados intentos de inicio de sesión. Intenta nuevamente más tarde.",
   standardHeaders: true,
   legacyHeaders: false,
-
-  handler: (req, res /*, next */) => {
-    // ⏱️ Calcular segundos restantes hasta que se libere el límite
-    let retryAfterSeconds = Math.ceil(WINDOW_MS / 1000); // valor por defecto: 900
-
-    if (req.rateLimit?.resetTime instanceof Date) {
-      const diffMs = req.rateLimit.resetTime.getTime() - Date.now();
-      if (diffMs > 0) {
-        retryAfterSeconds = Math.ceil(diffMs / 1000);
-      }
-    }
-
-    return res.status(429).json({
-      error:
-        "Demasiados intentos de inicio de sesión. Intenta nuevamente más tarde.",
-      retryAfterSeconds, // 👈 el front ya lo usa
-    });
-  },
 });
